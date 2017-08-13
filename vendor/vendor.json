@@ -1,0 +1,83 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"checksumSHA1": "eOitZqleWp2kZCVmsbulrnmQ7Vk=",
+			"path": "github.com/cloudfoundry/bytefmt",
+			"revision": "f4415fafc5619dd75599a54a7c91fb3948ad58bd",
+			"revisionTime": "2017-04-28T00:31:08Z"
+		},
+		{
+			"checksumSHA1": "7vXgZaqbJ7odf4MpPxUoSb3SLKk=",
+			"path": "github.com/eclipse/paho.mqtt.golang",
+			"revision": "e020008df4799501216b676f3fa97d55f3cfc315",
+			"revisionTime": "2017-08-11T15:45:52Z"
+		},
+		{
+			"checksumSHA1": "goelhC2wdJLxVfgHt7VNWr/u14g=",
+			"path": "github.com/eclipse/paho.mqtt.golang/packets",
+			"revision": "e020008df4799501216b676f3fa97d55f3cfc315",
+			"revisionTime": "2017-08-11T15:45:52Z"
+		},
+		{
+			"checksumSHA1": "/1fi1Ey5aEud5cJk73mkPszXD2I=",
+			"path": "github.com/emitter-io/go",
+			"revision": "15a70e6081c60c3797d951f0f5385e9fc1bd66b1",
+			"revisionTime": "2016-12-05T20:16:41Z"
+		},
+		{
+			"path": "github.com/emitter/go",
+			"revision": ""
+		},
+		{
+			"checksumSHA1": "GeuP1Hh84mFH39KbbcKq5ZdXhX4=",
+			"path": "github.com/gizak/termui",
+			"revision": "72304ddb9b4e9838426a021aad64a5a860e98324",
+			"revisionTime": "2017-05-02T14:12:00Z"
+		},
+		{
+			"checksumSHA1": "+htl14pFX6peDG5oTFb3SbrnTAQ=",
+			"path": "github.com/maruel/panicparse/stack",
+			"revision": "c139306d9b850f842c12be39998d2fcecfdf2e34",
+			"revisionTime": "2017-08-11T16:24:50Z"
+		},
+		{
+			"checksumSHA1": "b64yVZEKG21+a/xvcKEvqfai1ik=",
+			"path": "github.com/mattn/go-runewidth",
+			"revision": "97311d9f7767e3d6f422ea06661bc2c7a19e8a5d",
+			"revisionTime": "2017-05-10T07:48:58Z"
+		},
+		{
+			"checksumSHA1": "7sM0tWZLQWYgjZuSniTDZLrQl1I=",
+			"path": "github.com/mitchellh/go-wordwrap",
+			"revision": "ad45545899c7b13c020ea92b2072220eefad42b8",
+			"revisionTime": "2015-03-14T17:03:34Z"
+		},
+		{
+			"checksumSHA1": "OFUeljOMt4SMMWS2sVWLPV1l9KE=",
+			"path": "github.com/nsf/termbox-go",
+			"revision": "4ed959e0540971545eddb8c75514973d670cf739",
+			"revisionTime": "2017-07-10T10:34:07Z"
+		},
+		{
+			"checksumSHA1": "HUXE+Nrcau8FSaVEvPYHMvDjxOE=",
+			"path": "github.com/satori/go.uuid",
+			"revision": "5bf94b69c6b68ee1b541973bb8e1144db23a194b",
+			"revisionTime": "2017-03-21T23:07:31Z"
+		},
+		{
+			"checksumSHA1": "QEm/dePZ0lOnyOs+m22KjXfJ/IU=",
+			"path": "golang.org/x/net/proxy",
+			"revision": "1c05540f6879653db88113bc4a2b70aec4bd491f",
+			"revisionTime": "2017-08-04T00:04:37Z"
+		},
+		{
+			"checksumSHA1": "7EZyXN0EmZLgGxZxK01IJua4c8o=",
+			"path": "golang.org/x/net/websocket",
+			"revision": "1c05540f6879653db88113bc4a2b70aec4bd491f",
+			"revisionTime": "2017-08-04T00:04:37Z"
+		}
+	],
+	"rootPath": "github.com/kelindar/etop"
+}
