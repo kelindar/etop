@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	ui "github.com/LINBIT/termui"
 	"github.com/cloudfoundry/bytefmt"
 	emitter "github.com/emitter-io/go"
-	ui "github.com/gizak/termui"
 )
 
 // StatusInfo represents the status payload.
@@ -24,6 +24,7 @@ type StatusInfo struct {
 }
 
 var top = newTable()
+var data = make(map[string][]string)
 
 func main() {
 	err := ui.Init()
@@ -70,20 +71,10 @@ func main() {
 
 // Occurs when a status is received
 func onStatusReceived(client emitter.Emitter, msg emitter.Message) {
-	defer func() {
-		top.FgColors = top.FgColors[:0]
-		top.BgColors = top.BgColors[:0]
-		top.Analysis()
-		top.SetSize()
-
-		top.Border = true
-		ui.Body.Align()
-		ui.Render(ui.Body)
-	}()
-
+	defer render()
 	stats := new(StatusInfo)
 	if err := json.Unmarshal(msg.Payload(), stats); err == nil {
-		row := []string{
+		data[stats.Node] = []string{
 			fmt.Sprintf("%02d:%03d", stats.Time.Second(), stats.Time.Nanosecond()/1000000),
 			stats.Node,
 			stats.Addr,
@@ -92,16 +83,21 @@ func onStatusReceived(client emitter.Emitter, msg emitter.Message) {
 			fmt.Sprintf("%v", bytefmt.ByteSize(stats.MemoryPrivate)),
 			fmt.Sprintf("%d", stats.Subscriptions),
 		}
-
-		for i, r := range top.Rows {
-			if r[1] == stats.Node {
-				top.Rows[i] = row
-				return
-			}
-		}
-
-		top.Rows = append(top.Rows, row)
 	}
+}
+
+// render redraws the table
+func render() {
+	rows := [][]string{}
+	for _, v := range data {
+		rows = append(rows, v)
+	}
+
+	top.SetRows(rows)
+	top.Analysis()
+	top.SetSize()
+	ui.Body.Align()
+	ui.Render(ui.Body)
 }
 
 func newTable() *ui.Table {
@@ -110,9 +106,8 @@ func newTable() *ui.Table {
 	top.FgColor = ui.ColorWhite
 	top.BgColor = ui.ColorDefault
 	top.TextAlign = ui.AlignCenter
-	top.Border = false
+	top.Border = true
 	top.BorderLabel = "CLUSTER STATUS"
-
 	top.Separator = false
 	return top
 }
