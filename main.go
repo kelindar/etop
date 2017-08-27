@@ -20,6 +20,7 @@ type StatusInfo struct {
 	MemoryVirtual uint64    `json:"virt"`
 	Time          time.Time `json:"time"`
 	Uptime        float64   `json:"uptime"`
+	NumPeers      int       `json:"peers"`
 }
 
 var top = newTable()
@@ -86,6 +87,7 @@ func onStatusReceived(client emitter.Emitter, msg emitter.Message) {
 			fmt.Sprintf("%02d:%03d", stats.Time.Second(), stats.Time.Nanosecond()/1000000),
 			stats.Node,
 			stats.Addr,
+			fmt.Sprintf("%d", stats.NumPeers),
 			fmt.Sprintf("%.2f%%", stats.CPU),
 			fmt.Sprintf("%v", bytefmt.ByteSize(stats.MemoryPrivate)),
 			fmt.Sprintf("%d", stats.Subscriptions),
@@ -104,7 +106,7 @@ func onStatusReceived(client emitter.Emitter, msg emitter.Message) {
 
 func newTable() *ui.Table {
 	top := ui.NewTable()
-	top.Rows = [][]string{[]string{"Time", "Node", "Addr", "CPU", "Mem", "Subs"}}
+	top.Rows = [][]string{[]string{"Time", "Node", "Addr", "Peers", "CPU", "Mem", "Subs"}}
 	top.FgColor = ui.ColorWhite
 	top.BgColor = ui.ColorDefault
 	top.TextAlign = ui.AlignCenter
