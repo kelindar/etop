@@ -3,10 +3,14 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
+	"strings"
+	"sync"
 	"time"
 
 	ui "github.com/LINBIT/termui"
 	"github.com/cloudfoundry/bytefmt"
+	"github.com/emitter-io/emitter/utils"
 	emitter "github.com/emitter-io/go"
 )
 
@@ -24,7 +28,7 @@ type StatusInfo struct {
 }
 
 var top = newTable()
-var data = make(map[string][]string)
+var data = new(sync.Map)
 
 func main() {
 	err := ui.Init()
@@ -63,6 +67,9 @@ func main() {
 		ui.NewRow(ui.NewCol(12, 0, top)),
 	)
 
+	closing := make(chan bool)
+	utils.Repeat(render, 100*time.Millisecond, closing)
+
 	// calculate layout
 	ui.Body.Align()
 	ui.Render(ui.Body)
@@ -71,10 +78,18 @@ func main() {
 
 // Occurs when a status is received
 func onStatusReceived(client emitter.Emitter, msg emitter.Message) {
-	defer render()
 	stats := new(StatusInfo)
 	if err := json.Unmarshal(msg.Payload(), stats); err == nil {
-		data[stats.Node] = []string{
+		data.Store(stats.Node, stats)
+	}
+}
+
+// render redraws the table
+func render() {
+	r := [][]string{}
+	data.Range(func(k, v interface{}) bool {
+		stats := v.(*StatusInfo)
+		r = append(r, []string{
 			fmt.Sprintf("%02d:%03d", stats.Time.Second(), stats.Time.Nanosecond()/1000000),
 			stats.Node,
 			stats.Addr,
@@ -82,16 +97,16 @@ func onStatusReceived(client emitter.Emitter, msg emitter.Message) {
 			fmt.Sprintf("%.2f%%", stats.CPU),
 			fmt.Sprintf("%v", bytefmt.ByteSize(stats.MemoryPrivate)),
 			fmt.Sprintf("%d", stats.Subscriptions),
-		}
-	}
-}
+		})
+		return true
+	})
 
-// render redraws the table
-func render() {
-	rows := [][]string{}
-	for _, v := range data {
-		rows = append(rows, v)
-	}
+	sort.Slice(r, func(i, j int) bool {
+		return strings.Compare(r[i][1], r[j][1]) < 0
+	})
+
+	rows := [][]string{[]string{"Time", "Node", "Addr", "Peers", "CPU", "Mem", "Subs"}}
+	rows = append(rows, r...)
 
 	top.SetRows(rows)
 	top.Analysis()
@@ -102,7 +117,7 @@ func render() {
 
 func newTable() *ui.Table {
 	top := ui.NewTable()
-	top.Rows = [][]string{[]string{"Time", "Node", "Addr", "Peers", "CPU", "Mem", "Subs"}}
+	top.Rows = [][]string{[]string{"Loading..."}}
 	top.FgColor = ui.ColorWhite
 	top.BgColor = ui.ColorDefault
 	top.TextAlign = ui.AlignCenter

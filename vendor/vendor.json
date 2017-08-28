@@ -27,6 +27,10 @@
 			"revisionTime": "2017-08-11T15:45:52Z"
 		},
 		{
+			"path": "github.com/emitter-io/emitter/utils",
+			"revision": ""
+		},
+		{
 			"checksumSHA1": "/1fi1Ey5aEud5cJk73mkPszXD2I=",
 			"path": "github.com/emitter-io/go",
 			"revision": "15a70e6081c60c3797d951f0f5385e9fc1bd66b1",
