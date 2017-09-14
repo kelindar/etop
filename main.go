@@ -12,7 +12,7 @@ import (
 	"github.com/jessevdk/go-flags"
 	ui "github.com/LINBIT/termui"
 	"github.com/cloudfoundry/bytefmt"
-	"github.com/emitter-io/emitter/utils"
+	"github.com/kelindar/etop/utils"
 	emitter "github.com/emitter-io/go"
 )
 
