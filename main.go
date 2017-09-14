@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -8,11 +9,17 @@ import (
 	"sync"
 	"time"
 
+	"github.com/jessevdk/go-flags"
 	ui "github.com/LINBIT/termui"
 	"github.com/cloudfoundry/bytefmt"
 	"github.com/emitter-io/emitter/utils"
 	emitter "github.com/emitter-io/go"
 )
+
+var opts struct{
+	Broker string `short:"b" long:"broker" description:"The address of a broker in a IP:Port format" default:"127.0.0.1:8080"`
+	Key string `short:"k" long:"key" description:"The key for the cluster channel" required:"true"`
+}
 
 // StatusInfo represents the status payload.
 type StatusInfo struct {
@@ -31,15 +38,19 @@ var top = newTable()
 var data = new(sync.Map)
 
 func main() {
-	err := ui.Init()
-	if err != nil {
+	if _, err := flags.ParseArgs(&opts, os.Args); err != nil {
+		os.Exit(1)
+	}
+
+	// Initialize the UI
+	if err := ui.Init(); err != nil {
 		panic(err)
 	}
 	defer ui.Close()
 
 	// Create the options with default values
 	o := emitter.NewClientOptions()
-	o.AddBroker("tcp://127.0.0.1:8080")
+	o.AddBroker("tcp://" + opts.Broker)
 	o.SetOnMessageHandler(onStatusReceived)
 
 	// Create a new emitter client and connect to the broker
@@ -50,7 +61,7 @@ func main() {
 	}
 
 	// Subscribe to the cluster channel
-	c.Subscribe("1RszYitFOWDlzKhhqaxDG8--vw4RbCTt", "cluster/")
+	c.Subscribe(opts.Key, "cluster/")
 
 	// press q to quit
 	ui.Handle("/sys/kbd/q", func(ui.Event) {

@@ -41,6 +41,12 @@
 			"revision": ""
 		},
 		{
+			"checksumSHA1": "SQiqMYFp63MKuzJZpce0Lp5Sc/c=",
+			"path": "github.com/jessevdk/go-flags",
+			"revision": "6cf8f02b4ae8ba723ddc64dcfd403e530c06d927",
+			"revisionTime": "2017-07-22T07:29:52Z"
+		},
+		{
 			"checksumSHA1": "+htl14pFX6peDG5oTFb3SbrnTAQ=",
 			"path": "github.com/maruel/panicparse/stack",
 			"revision": "c139306d9b850f842c12be39998d2fcecfdf2e34",
