@@ -1,24 +1,24 @@
 package main
 
 import (
-	"os"
 	"encoding/json"
 	"fmt"
+	"os"
 	"sort"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/jessevdk/go-flags"
 	ui "github.com/LINBIT/termui"
 	"github.com/cloudfoundry/bytefmt"
-	"github.com/kelindar/etop/utils"
 	emitter "github.com/emitter-io/go"
+	"github.com/jessevdk/go-flags"
+	"github.com/kelindar/etop/utils"
 )
 
-var opts struct{
+var opts struct {
 	Broker string `short:"b" long:"broker" description:"The address of a broker in a IP:Port format" default:"127.0.0.1:8080"`
-	Key string `short:"k" long:"key" description:"The key for the cluster channel" required:"true"`
+	Key    string `short:"k" long:"key" description:"The key for the cluster channel" required:"true"`
 }
 
 // StatusInfo represents the status payload.
@@ -26,6 +26,7 @@ type StatusInfo struct {
 	Node          string    `json:"node"`
 	Addr          string    `json:"addr"`
 	Subscriptions int       `json:"subs"`
+	Connections   int64     `json:"conns"`
 	CPU           float64   `json:"cpu"`
 	MemoryPrivate uint64    `json:"priv"`
 	MemoryVirtual uint64    `json:"virt"`
@@ -107,7 +108,7 @@ func render() {
 			fmt.Sprintf("%d", stats.NumPeers),
 			fmt.Sprintf("%.2f%%", stats.CPU),
 			fmt.Sprintf("%v", bytefmt.ByteSize(stats.MemoryPrivate)),
-			fmt.Sprintf("%d", stats.Subscriptions),
+			fmt.Sprintf("%d", stats.Connections),
 		})
 		return true
 	})
@@ -116,7 +117,7 @@ func render() {
 		return strings.Compare(r[i][1], r[j][1]) < 0
 	})
 
-	rows := [][]string{[]string{"Time", "Node", "Addr", "Peers", "CPU", "Mem", "Subs"}}
+	rows := [][]string{[]string{"Time", "Node", "Addr", "Peers", "CPU", "Mem", "Conns"}}
 	rows = append(rows, r...)
 
 	top.SetRows(rows)
