@@ -1,7 +1,7 @@
 package main
 
 import (
-	"encoding/json"
+	"context"
 	"fmt"
 	"os"
 	"sort"
@@ -9,11 +9,14 @@ import (
 	"sync"
 	"time"
 
-	ui "github.com/LINBIT/termui"
 	"github.com/cloudfoundry/bytefmt"
+	"github.com/emitter-io/emitter/async"
+	"github.com/emitter-io/emitter/monitor"
+	"github.com/emitter-io/emitter/network/address"
 	emitter "github.com/emitter-io/go"
+	"github.com/gdamore/tcell"
 	"github.com/jessevdk/go-flags"
-	"github.com/kelindar/etop/utils"
+	"github.com/rivo/tview"
 )
 
 var opts struct {
@@ -21,33 +24,16 @@ var opts struct {
 	Key    string `short:"k" long:"key" description:"The key for the cluster channel" required:"true"`
 }
 
-// StatusInfo represents the status payload.
-type StatusInfo struct {
-	Node          string    `json:"node"`
-	Addr          string    `json:"addr"`
-	Subscriptions int       `json:"subs"`
-	Connections   int64     `json:"conns"`
-	CPU           float64   `json:"cpu"`
-	MemoryPrivate uint64    `json:"priv"`
-	MemoryVirtual uint64    `json:"virt"`
-	Time          time.Time `json:"time"`
-	Uptime        float64   `json:"uptime"`
-	NumPeers      int       `json:"peers"`
-}
-
-var top = newTable()
+var app = tview.NewApplication()
 var data = new(sync.Map)
+var table = tview.NewTable().
+	SetBorders(true).
+	SetFixed(1, 1)
 
 func main() {
 	if _, err := flags.ParseArgs(&opts, os.Args); err != nil {
 		os.Exit(1)
 	}
-
-	// Initialize the UI
-	if err := ui.Init(); err != nil {
-		panic(err)
-	}
-	defer ui.Close()
 
 	// Create the options with default values
 	o := emitter.NewClientOptions()
@@ -62,79 +48,76 @@ func main() {
 	}
 
 	// Subscribe to the cluster channel
-	c.Subscribe(opts.Key, "cluster/")
+	c.Subscribe(opts.Key, "stats/")
 
-	// press q to quit
-	ui.Handle("/sys/kbd/q", func(ui.Event) {
-		ui.StopLoop()
-	})
+	async.Repeat(context.Background(), 100*time.Millisecond, render)
 
-	ui.Handle("/sys/kbd/C-c", func(ui.Event) {
-		ui.StopLoop()
-	})
-
-	// build
-	top = newTable()
-	ui.Body.AddRows(
-		ui.NewRow(ui.NewCol(12, 0, top)),
-	)
-
-	closing := make(chan bool)
-	utils.Repeat(render, 100*time.Millisecond, closing)
-
-	// calculate layout
-	ui.Body.Align()
-	ui.Render(ui.Body)
-	ui.Loop() // block until StopLoop is called
+	flex := tview.NewFlex().AddItem(table, 0, 1, true)
+	if err := app.SetRoot(flex, true).Run(); err != nil {
+		panic(err)
+	}
 }
 
 // Occurs when a status is received
 func onStatusReceived(client emitter.Emitter, msg emitter.Message) {
-	stats := new(StatusInfo)
-	if err := json.Unmarshal(msg.Payload(), stats); err == nil {
-		data.Store(stats.Node, stats)
+	if metrics, err := monitor.Restore(msg.Payload()); err == nil {
+		stats := make(map[string]*monitor.Snapshot)
+		for _, m := range metrics {
+			copy := m // Don't capture the iterator
+			stats[m.Name()] = &copy
+		}
+
+		node := address.Fingerprint(uint64(stats["node.id"].Max())).String()
+		data.Store(node, stats)
 	}
 }
 
 // render redraws the table
 func render() {
-	r := [][]string{}
+	rows := [][]string{}
 	data.Range(func(k, v interface{}) bool {
-		stats := v.(*StatusInfo)
-		r = append(r, []string{
-			fmt.Sprintf("%02d:%03d", stats.Time.Second(), stats.Time.Nanosecond()/1000000),
-			stats.Node,
-			stats.Addr,
-			fmt.Sprintf("%d", stats.NumPeers),
-			fmt.Sprintf("%.2f%%", stats.CPU),
-			fmt.Sprintf("%v", bytefmt.ByteSize(stats.MemoryPrivate)),
-			fmt.Sprintf("%d", stats.Connections),
+		stat := func(k string) *monitor.Snapshot {
+			if s, ok := v.(map[string]*monitor.Snapshot)[k]; ok {
+				return s
+			}
+			return new(monitor.Snapshot)
+		}
+
+		rows = append(rows, []string{
+			fmt.Sprintf("%s", k),
+			fmt.Sprintf("%d", stat("node.peers").Max()),
+			fmt.Sprintf("%d", stat("node.conns").Max()),
+			fmt.Sprintf("x%d", stat("go.procs").Max()),
+			fmt.Sprintf("%d", stat("go.count").Max()),
+			fmt.Sprintf("%v/%v",
+				bytefmt.ByteSize(uint64(stat("heap.inuse").Max())),
+				bytefmt.ByteSize(uint64(stat("heap.sys").Max()))),
+			fmt.Sprintf("%v %.1f%%",
+				bytefmt.ByteSize(uint64(stat("gc.sys").Max())),
+				stat("gc.cpu").Mean()/10),
+			fmt.Sprintf("%.0fμs", stat("send.pub").Quantile(99)[0]),
+			fmt.Sprintf("%.0fμs", stat("rcv.pub").Quantile(99)[0]),
 		})
 		return true
 	})
 
-	sort.Slice(r, func(i, j int) bool {
-		return strings.Compare(r[i][1], r[j][1]) < 0
+	sort.Slice(rows, func(i, j int) bool {
+		return strings.Compare(rows[i][0], rows[j][0]) < 0
 	})
 
-	rows := [][]string{[]string{"Time", "Node", "Addr", "Peers", "CPU", "Mem", "Conns"}}
-	rows = append(rows, r...)
+	headers := []string{"Addr", "Peers", "Conns", "Core", "Go", "Heap", "GC", "<- p99", "-> p99"}
+	for j, h := range headers {
+		table.SetCell(0, j, tview.NewTableCell(h).
+			SetTextColor(tcell.ColorWhite).
+			SetAlign(tview.AlignCenter))
+	}
 
-	top.SetRows(rows)
-	top.Analysis()
-	top.SetSize()
-	ui.Body.Align()
-	ui.Render(ui.Body)
-}
-
-func newTable() *ui.Table {
-	top := ui.NewTable()
-	top.Rows = [][]string{[]string{"Loading..."}}
-	top.FgColor = ui.ColorWhite
-	top.BgColor = ui.ColorDefault
-	top.TextAlign = ui.AlignCenter
-	top.Border = true
-	top.BorderLabel = "CLUSTER STATUS"
-	top.Separator = false
-	return top
+	for i, items := range rows {
+		for j, c := range items {
+			table.SetCell(i+1, j, tview.NewTableCell(c).
+				SetTextColor(tcell.ColorLightGrey).
+				SetAlign(tview.AlignCenter))
+		}
+	}
+	app.Draw()
 }

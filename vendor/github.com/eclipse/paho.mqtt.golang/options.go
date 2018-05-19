@@ -17,8 +17,13 @@ package mqtt
 import (
 	"crypto/tls"
 	"net/url"
+	"strings"
 	"time"
 )
+
+// CredentialsProvider allows the username and password to be updated
+// before reconnecting. It should return the current username and password.
+type CredentialsProvider func() (username string, password string)
 
 // MessageHandler is a callback type which can be set to be
 // executed upon the arrival of messages published to topics
@@ -42,6 +47,7 @@ type ClientOptions struct {
 	ClientID                string
 	Username                string
 	Password                string
+	CredentialsProvider     CredentialsProvider
 	CleanSession            bool
 	Order                   bool
 	WillEnabled             bool
@@ -52,7 +58,7 @@ type ClientOptions struct {
 	ProtocolVersion         uint
 	protocolVersionExplicit bool
 	TLSConfig               tls.Config
-	KeepAlive               time.Duration
+	KeepAlive               int64
 	PingTimeout             time.Duration
 	ConnectTimeout          time.Duration
 	MaxReconnectInterval    time.Duration
@@ -90,7 +96,7 @@ func NewClientOptions() *ClientOptions {
 		ProtocolVersion:         0,
 		protocolVersionExplicit: false,
 		TLSConfig:               tls.Config{},
-		KeepAlive:               30 * time.Second,
+		KeepAlive:               30,
 		PingTimeout:             10 * time.Second,
 		ConnectTimeout:          30 * time.Second,
 		MaxReconnectInterval:    10 * time.Minute,
@@ -108,11 +114,23 @@ func NewClientOptions() *ClientOptions {
 // scheme://host:port
 // Where "scheme" is one of "tcp", "ssl", or "ws", "host" is the ip-address (or hostname)
 // and "port" is the port on which the broker is accepting connections.
+//
+// Default values for hostname is "127.0.0.1", for schema is "tcp://".
+//
+// An example broker URI would look like: tcp://foobar.com:1883
 func (o *ClientOptions) AddBroker(server string) *ClientOptions {
-	brokerURI, err := url.Parse(server)
-	if err == nil {
-		o.Servers = append(o.Servers, brokerURI)
+	if len(server) > 0 && server[0] == ':' {
+		server = "127.0.0.1" + server
 	}
+	if !strings.Contains(server, "://") {
+		server = "tcp://" + server
+	}
+	brokerURI, err := url.Parse(server)
+	if err != nil {
+		ERROR.Println(CLI, "Failed to parse %q broker address: %s", server, err)
+		return o
+	}
+	o.Servers = append(o.Servers, brokerURI)
 	return o
 }
 
@@ -137,6 +155,15 @@ func (o *ClientOptions) SetUsername(u string) *ClientOptions {
 // be sent in plaintext accross the wire.
 func (o *ClientOptions) SetPassword(p string) *ClientOptions {
 	o.Password = p
+	return o
+}
+
+// SetCredentialsProvider will set a method to be called by this client when
+// connecting to the MQTT broker that provide the current username and password.
+// Note: without the use of SSL/TLS, this information will be sent
+// in plaintext accross the wire.
+func (o *ClientOptions) SetCredentialsProvider(p CredentialsProvider) *ClientOptions {
+	o.CredentialsProvider = p
 	return o
 }
 
@@ -182,7 +209,7 @@ func (o *ClientOptions) SetStore(s Store) *ClientOptions {
 // allow the client to know that a connection has not been lost with the
 // server.
 func (o *ClientOptions) SetKeepAlive(k time.Duration) *ClientOptions {
-	o.KeepAlive = k
+	o.KeepAlive = int64(k / time.Second)
 	return o
 }
 
