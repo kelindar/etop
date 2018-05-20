@@ -12,7 +12,6 @@ import (
 	"github.com/cloudfoundry/bytefmt"
 	"github.com/emitter-io/emitter/async"
 	"github.com/emitter-io/emitter/monitor"
-	"github.com/emitter-io/emitter/network/address"
 	emitter "github.com/emitter-io/go"
 	"github.com/gdamore/tcell"
 	"github.com/jessevdk/go-flags"
@@ -66,9 +65,7 @@ func onStatusReceived(client emitter.Emitter, msg emitter.Message) {
 			copy := m // Don't capture the iterator
 			stats[m.Name()] = &copy
 		}
-
-		node := address.Fingerprint(uint64(stats["node.id"].Max())).String()
-		data.Store(node, stats)
+		data.Store(stats["node.id"].Tag(), stats)
 	}
 }
 
@@ -85,18 +82,23 @@ func render() {
 
 		rows = append(rows, []string{
 			fmt.Sprintf("%s", k),
+			fmt.Sprintf("%s", stat("node.addr").Tag()),
+			fmt.Sprintf("%v", (time.Duration(stat("proc.uptime").Max()) * time.Second).String()),
 			fmt.Sprintf("%d", stat("node.peers").Max()),
 			fmt.Sprintf("%d", stat("node.conns").Max()),
 			fmt.Sprintf("x%d", stat("go.procs").Max()),
 			fmt.Sprintf("%d", stat("go.count").Max()),
+			fmt.Sprintf("%v", size(stat("proc.priv").Max())),
 			fmt.Sprintf("%v/%v",
-				bytefmt.ByteSize(uint64(stat("heap.inuse").Max())),
-				bytefmt.ByteSize(uint64(stat("heap.sys").Max()))),
-			fmt.Sprintf("%v %.1f%%",
-				bytefmt.ByteSize(uint64(stat("gc.sys").Max())),
-				stat("gc.cpu").Mean()/10),
-			fmt.Sprintf("%.0fμs", stat("send.pub").Quantile(99)[0]),
-			fmt.Sprintf("%.0fμs", stat("rcv.pub").Quantile(99)[0]),
+				size(stat("heap.inuse").Max()),
+				size(stat("heap.sys").Max())),
+			fmt.Sprintf("%.1f%%", stat("gc.cpu").Mean()/100),
+			fmt.Sprintf("%d ±%.0fμs",
+				stat("send.pub").Count(),
+				stat("send.pub").Quantile(99)[0]),
+			fmt.Sprintf("%d ±%.0fμs",
+				stat("rcv.pub").Count(),
+				stat("rcv.pub").Quantile(99)[0]),
 		})
 		return true
 	})
@@ -105,7 +107,7 @@ func render() {
 		return strings.Compare(rows[i][0], rows[j][0]) < 0
 	})
 
-	headers := []string{"Addr", "Peers", "Conns", "Core", "Go", "Heap", "GC", "<- p99", "-> p99"}
+	headers := []string{"ID", "Addr", "Uptime", "Peer", "Conn", "Core", "Task", "Mem", "Heap", "GC", "Send", "Recv"}
 	for j, h := range headers {
 		table.SetCell(0, j, tview.NewTableCell(h).
 			SetTextColor(tcell.ColorWhite).
@@ -120,4 +122,9 @@ func render() {
 		}
 	}
 	app.Draw()
+}
+
+// Size returns the size in bytes
+func size(size int64) string {
+	return bytefmt.ByteSize(uint64(size))
 }

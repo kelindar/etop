@@ -27,28 +27,22 @@
 			"revisionTime": "2018-04-29T05:37:05Z"
 		},
 		{
-			"checksumSHA1": "Sk5FCra5a6nYi9EDmt+/0IzLKuk=",
+			"checksumSHA1": "oPrvaoBDFzUKxy58UfI7Y9mVcpM=",
 			"path": "github.com/emitter-io/emitter/async",
-			"revision": "2271440e5597a5d73f1e629573cc496b2686e1a1",
-			"revisionTime": "2018-05-19T16:42:32Z"
+			"revision": "02ab022eebf366bd1d2ee7dc330bb7a5f5698215",
+			"revisionTime": "2018-05-20T04:29:48Z"
 		},
 		{
 			"checksumSHA1": "lv59ceuHsP0B2tP3N5lwQhQcPUA=",
 			"path": "github.com/emitter-io/emitter/logging",
-			"revision": "2271440e5597a5d73f1e629573cc496b2686e1a1",
-			"revisionTime": "2018-05-19T16:42:32Z"
+			"revision": "02ab022eebf366bd1d2ee7dc330bb7a5f5698215",
+			"revisionTime": "2018-05-20T04:29:48Z"
 		},
 		{
-			"checksumSHA1": "VjpRUksF4Km0HUWg8pxbZwhLw7k=",
+			"checksumSHA1": "TtRdPB7T6kCDb7p7zoCkkTyaeF0=",
 			"path": "github.com/emitter-io/emitter/monitor",
-			"revision": "2271440e5597a5d73f1e629573cc496b2686e1a1",
-			"revisionTime": "2018-05-19T16:42:32Z"
-		},
-		{
-			"checksumSHA1": "o8cHGVFZPBvdmLOJ/IXIj4aUaww=",
-			"path": "github.com/emitter-io/emitter/network/address",
-			"revision": "2271440e5597a5d73f1e629573cc496b2686e1a1",
-			"revisionTime": "2018-05-19T16:42:32Z"
+			"revision": "02ab022eebf366bd1d2ee7dc330bb7a5f5698215",
+			"revisionTime": "2018-05-20T04:29:48Z"
 		},
 		{
 			"path": "github.com/emitter-io/emitter/utils",
@@ -89,12 +83,6 @@
 			"revisionTime": "2018-05-18T05:39:59Z"
 		},
 		{
-			"checksumSHA1": "JOirDlSKFYumL8yOeo4e8xCWujY=",
-			"path": "github.com/hashicorp/go-sockaddr",
-			"revision": "6d291a969b86c4b633730bfc6b8b9d64c3aafed9",
-			"revisionTime": "2018-03-20T11:50:54Z"
-		},
-		{
 			"checksumSHA1": "/cYPn+lbJ7DZLcrOCEg5KmVvspg=",
 			"path": "github.com/jessevdk/go-flags",
 			"revision": "1c38ed7ad0cc3d9e66649ac398c30e45f395c4eb",
@@ -105,6 +93,12 @@
 			"path": "github.com/kelindar/binary",
 			"revision": "d2f2bdcebc7412762b0c458417dba6626c50ad80",
 			"revisionTime": "2018-05-19T13:36:12Z"
+		},
+		{
+			"checksumSHA1": "aUJlnUep1PBCNkSvNF2RYxKvkbE=",
+			"path": "github.com/kelindar/process",
+			"revision": "69a29e249ec39e635cd4e42f96c227b6ef2f28d7",
+			"revisionTime": "2017-07-30T15:03:28Z"
 		},
 		{
 			"checksumSHA1": "ULwp3l2JALqvqKu66US6JpYjzcg=",
