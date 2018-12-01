@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/cloudfoundry/bytefmt"
-	"github.com/emitter-io/emitter/async"
-	"github.com/emitter-io/emitter/monitor"
+	"github.com/kelindar/etop/internal/async"
+	"github.com/emitter-io/stats"
 	emitter "github.com/emitter-io/go"
 	"github.com/gdamore/tcell"
 	"github.com/jessevdk/go-flags"
@@ -59,13 +59,13 @@ func main() {
 
 // Occurs when a status is received
 func onStatusReceived(client emitter.Emitter, msg emitter.Message) {
-	if metrics, err := monitor.Restore(msg.Payload()); err == nil {
-		stats := make(map[string]*monitor.Snapshot)
+	if metrics, err := stats.Restore(msg.Payload()); err == nil {
+		snapshots := make(map[string]*stats.Snapshot)
 		for _, m := range metrics {
 			copy := m // Don't capture the iterator
-			stats[m.Name()] = &copy
+			snapshots[m.Name()] = &copy
 		}
-		data.Store(stats["node.id"].Tag(), stats)
+		data.Store(snapshots["node.id"].Tag(), snapshots)
 	}
 }
 
@@ -73,11 +73,11 @@ func onStatusReceived(client emitter.Emitter, msg emitter.Message) {
 func render() {
 	rows := [][]string{}
 	data.Range(func(k, v interface{}) bool {
-		stat := func(k string) *monitor.Snapshot {
-			if s, ok := v.(map[string]*monitor.Snapshot)[k]; ok {
+		stat := func(k string) *stats.Snapshot {
+			if s, ok := v.(map[string]*stats.Snapshot)[k]; ok {
 				return s
 			}
-			return new(monitor.Snapshot)
+			return new(stats.Snapshot)
 		}
 
 		rows = append(rows, []string{
@@ -86,6 +86,7 @@ func render() {
 			fmt.Sprintf("%v", (time.Duration(stat("proc.uptime").Max()) * time.Second).String()),
 			fmt.Sprintf("%d", stat("node.peers").Max()),
 			fmt.Sprintf("%d", stat("node.conns").Max()),
+			fmt.Sprintf("%d", stat("node.subs").Max()),
 			fmt.Sprintf("x%d", stat("go.procs").Max()),
 			fmt.Sprintf("%d", stat("go.count").Max()),
 			fmt.Sprintf("%v", size(stat("proc.priv").Max())),
@@ -103,11 +104,12 @@ func render() {
 		return true
 	})
 
+
 	sort.Slice(rows, func(i, j int) bool {
 		return strings.Compare(rows[i][0], rows[j][0]) < 0
 	})
 
-	headers := []string{"ID", "Addr", "Uptime", "Peer", "Conn", "Core", "Task", "Mem", "Heap", "GC", "Send", "Recv"}
+	headers := []string{"ID", "Addr", "Uptime", "Peer", "Conn", "Subs", "Core", "Task", "Mem", "Heap", "GC", "Send", "Recv"}
 	for j, h := range headers {
 		table.SetCell(0, j, tview.NewTableCell(h).
 			SetTextColor(tcell.ColorWhite).
@@ -125,6 +127,6 @@ func render() {
 }
 
 // Size returns the size in bytes
-func size(size int64) string {
+func size(size int) string {
 	return bytefmt.ByteSize(uint64(size))
 }
