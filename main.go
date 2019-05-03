@@ -10,16 +10,16 @@ import (
 	"time"
 
 	"github.com/cloudfoundry/bytefmt"
-	"github.com/kelindar/etop/internal/async"
-	"github.com/emitter-io/stats"
 	emitter "github.com/emitter-io/go"
+	"github.com/emitter-io/stats"
 	"github.com/gdamore/tcell"
 	"github.com/jessevdk/go-flags"
+	"github.com/kelindar/etop/internal/async"
 	"github.com/rivo/tview"
 )
 
 var opts struct {
-	Broker string `short:"b" long:"broker" description:"The address of a broker in a IP:Port format" default:"127.0.0.1:8080"`
+	Broker string `short:"b" long:"broker" description:"The address of a broker in a protocol://IP:Port format" default:"tcp://127.0.0.1:8080"`
 	Key    string `short:"k" long:"key" description:"The key for the cluster channel" required:"true"`
 }
 
@@ -36,7 +36,7 @@ func main() {
 
 	// Create the options with default values
 	o := emitter.NewClientOptions()
-	o.AddBroker("tcp://" + opts.Broker)
+	o.AddBroker(opts.Broker)
 	o.SetOnMessageHandler(onStatusReceived)
 
 	// Create a new emitter client and connect to the broker
@@ -103,7 +103,6 @@ func render() {
 		})
 		return true
 	})
-
 
 	sort.Slice(rows, func(i, j int) bool {
 		return strings.Compare(rows[i][0], rows[j][0]) < 0
