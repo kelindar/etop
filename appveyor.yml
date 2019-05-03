@@ -11,6 +11,7 @@ install:
   - appveyor DownloadFile https://storage.googleapis.com/golang/go1.11.2.windows-amd64.zip
   - 7z x go1.11.2.windows-amd64.zip -y -oC:\ > NUL
   - go version
+  - go mod download
 
 build_script:
 - cmd: .\build.bat
