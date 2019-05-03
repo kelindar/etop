@@ -1,9 +1,9 @@
 version: 2.0.{build}
 platform: x64
-clone_folder: c:\gopath\src\github.com\kelindar\etop
+clone_folder: c:\building\src\github.com\kelindar\etop
 
 environment:  
-  GOPATH: c:\gopath_moved
+  GOPATH: c:\gopath
 
 install:  
   - set PATH=%GOPATH%\bin;c:\go\bin;%PATH%
