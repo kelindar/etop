@@ -6,5 +6,5 @@ Command-line utility for emitter.io cluster status. This small utility subscribe
 ## Usage
 
 ```
-etop --key "readonly key for stats/ channel" --broker "protcol://IP:PORT"
+etop --key "readonly key for stats/ channel" --broker "protocol://[hostname|IP]:PORT"
 ```
